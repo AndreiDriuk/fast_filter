@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (gdb/lldb)", // Название конфигурации
+            "type": "cppdbg", // Тип отладчика (для C/C++)
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}", // Путь к исполняемому файлу, определенному CMake
+            "args": [], // Аргументы командной строки для вашей программы
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb", // или "lldb" в зависимости от вашей ОС и установленного отладчика
+            "setupCommands": [
+                {
+                    "description": "Включить выравнивание вывода для перезаписи",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "CMake: build" // Перед запуском отладчика выполняется задача сборки CMake
+        }
+    ]
+}
