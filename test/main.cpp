@@ -5,6 +5,8 @@ using namespace std;
 
 int main(int argc, char *argv[]) {
 
+
+    size_t kDecim = 7;
     ifstream file1("sinus.bin", ios::binary | ios::ate);
     size_t size1 = file1.tellg();
     file1.seekg(0, ios::beg);
@@ -25,26 +27,18 @@ int main(int argc, char *argv[]) {
 
     float x1 = data1[0];
     float x2 = data1[1];
-    // float *filter  = new float[16];
-     float *result  = new float[size1/4+size2/4];
-     float * rest = new float[size2/4];
-
-    // for(int i = 0; i<64; i+=2){
-    //     data1[i] = 0.1;
-    //     data1[i+1] = -0.1;
-    // }
-
-    // for(int i = 0; i<16; i+=1){
-    //     filter[i] = 0.001;
-    //     result[i] = -999;
-    // }
+    
+    float *result  = new float[size1/4+size2/4];
+    float * rest = new float[size2/4];
     std::cout<<size1/4<<std::endl;
     std::cout<<size2/4<<std::endl;
-     myComplexFilter(data1, size1/4, data2, size2/4, result, rest);
+    // myComplexFilter(data1, size1/4, data2, size2/4, result, rest);
+
+    decimate(data1, size1/4, data2, size2/4, result, rest, kDecim);
     std::ofstream fileout("Result.txt", std::ios::trunc);// trunc - перезапишет файл
 
     if(fileout.is_open()){
-        for(int i = 0; i<(size1/4-size2/4); i+=2){
+        for(int i = 0; i<(size1/4-size2/4)/kDecim; i+=2){
             fileout<<i/2<<": "<<result[i]<<" + "<<result[i+1]<<"i"<<"\n";
         }
         fileout.close();
