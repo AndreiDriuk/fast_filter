@@ -49,3 +49,6 @@ endif()
 
 configure_file(covolution.cl ${CMAKE_CURRENT_BINARY_DIR}/covolution.cl COPYONLY)
 configure_file(add.cl ${CMAKE_CURRENT_BINARY_DIR}/add.cl COPYONLY)
+
+configure_file(sinus.bin ${CMAKE_CURRENT_BINARY_DIR}/sinus.bin COPYONLY)
+configure_file(filter.bin ${CMAKE_CURRENT_BINARY_DIR}/filter.bin COPYONLY)

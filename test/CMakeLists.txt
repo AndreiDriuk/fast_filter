@@ -15,3 +15,6 @@ target_link_libraries(main_app  PRIVATE  ffilter)
 target_include_directories(main_app PRIVATE 
     ${CMAKE_SOURCE_DIR}/math
 )
+
+configure_file(sinus.bin ${CMAKE_CURRENT_BINARY_DIR}/sinus.bin COPYONLY)
+configure_file(filter.bin ${CMAKE_CURRENT_BINARY_DIR}/filter.bin COPYONLY)

@@ -52,20 +52,28 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
 
 int main(){
 
-    int size1 = 100000;
-    int size2 = 100;
+
+    size_t kDecim = 7;
+    std::ifstream file1("sinus.bin", std::ios::binary | std::ios::ate);
+    size_t size1 = file1.tellg()/4;
+    file1.seekg(0, std::ios::beg);
+
+    float *data1 = new float[size1];
+    file1.read((char*)data1, size1*4);
+    file1.close();
+    
+    std::ifstream file2("filter.bin", std::ios::binary | std::ios::ate);
+    size_t size2 = file2.tellg();
+    file2.seekg(0, std::ios::beg);
+
+    float *data2 = new float[size2];
+    file2.read((char*)data2, size2*4);
+    file2.close();
+
     int size3 = size1+size2;
     float *a =  new float[size1];
     float *b  = new float[size2];
     float *c = new float[size1+size2];
-
-    for(int i = 0; i<size1; ++i){
-        a[i] = 0.001*i;
-    }
-
-    for(int i = 0; i<size2; ++i){
-        b[i] = 0.01*i;
-    }
     
     // 1. Получаем платформу
     cl_platform_id platform;
@@ -86,9 +94,9 @@ int main(){
     
     // 5. Создаем буферы
     cl_mem bufferA = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                    size1* sizeof(float), a, NULL);
+                                    size1* sizeof(float), data1, NULL);
     cl_mem bufferB = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                    size1 * sizeof(float), b, NULL);
+                                    size1 * sizeof(float), data2, NULL);
     cl_mem bufferC = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
                                     size1 * sizeof(float), NULL, NULL);
     
@@ -132,9 +140,17 @@ int main(){
     clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, size1 * sizeof(float), c, 0, NULL, NULL);
     
    //12. Выводим результат
-    std::cout << "Результат сложения:\n";
-    for (int i = 0; i < 10000; i++) {
-        std::cout << a[i]  << " = " << c[i] << std::endl;
+    // std::cout << "Результат сложения:\n";
+    // for (int i = 0; i < 10000; i++) {
+    //     std::cout << a[i]  << " = " << c[i] << std::endl;
+    // }
+    std::ofstream fileout("Result.txt", std::ios::trunc);// trunc - перезапишет файл
+
+    if(fileout.is_open()){
+        for(int i = 0; i<(size1/4-size2/4); i+=2){
+            fileout<<i/2<<": "<<c[i]<<" + "<<c[i+1]<<" i"<<"\n";
+        }
+        fileout.close();
     }
     
     // 13. Освобождаем ресурсы

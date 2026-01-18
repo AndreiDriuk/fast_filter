@@ -34,7 +34,8 @@ int main(int argc, char *argv[]) {
     std::cout<<size2/4<<std::endl;
     // myComplexFilter(data1, size1/4, data2, size2/4, result, rest);
 
-    decimate(data1, size1/4, data2, size2/4, result, rest, kDecim);
+    //decimate(data1, size1/4, data2, size2/4, result, rest, kDecim);
+    filter(data1, size1/4, data2, size2/4, result, rest);
     std::ofstream fileout("Result.txt", std::ios::trunc);// trunc - перезапишет файл
 
     if(fileout.is_open()){
