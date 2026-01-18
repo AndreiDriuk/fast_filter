@@ -53,17 +53,18 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
 int main(){
 
     int size1 = 100000;
-    int size2 = 100000;
+    int size2 = 100;
+    int size3 = size1+size2;
     float *a =  new float[size1];
     float *b  = new float[size2];
     float *c = new float[size1+size2];
 
-5    for(int i = 0; i<size1; ++i){
-        a[i] = 1;
+    for(int i = 0; i<size1; ++i){
+        a[i] = 0.001*i;
     }
 
     for(int i = 0; i<size2; ++i){
-        b[i] = 0.001;
+        b[i] = 0.01*i;
     }
     
     // 1. Получаем платформу
@@ -93,50 +94,24 @@ int main(){
     
     // 6. Создаем программу
     //cl_program program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, NULL);
-    cl_program program =  CreateProgram(context, device, "add.cl");
+    cl_program program =  CreateProgram(context, device, "covolution.cl");
     
     // 7. Компилируем программу
     //clBuildProgram(program, 1, &device, NULL, NULL, NULL);
     
     // 8. Создаем ядро
-    cl_kernel kernel = clCreateKernel(program, "add", NULL);
+    cl_kernel kernel = clCreateKernel(program, "convolution_1d", NULL);
     
     // 9. Устанавливаем аргументы ядра
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferA);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &bufferB);
     clSetKernelArg(kernel, 2, sizeof(cl_mem), &bufferC);
+    clSetKernelArg(kernel, 3, sizeof(int),    &size1);
+    clSetKernelArg(kernel, 4, sizeof(int),    &size2);
+    clSetKernelArg(kernel, 5, sizeof(cl_mem), &size3);
     // clSetKernelArg(kernel, 3, sizeof(cl_int), &bufferA);s
     // clSetKernelArg(kernel, 4, sizeof(cl_int), &bufferB);
     // clSetKernelArg(kernel, 5, sizeof(cl_int), &bufferC);
-
-
-    // количество потоков в группе
-    size_t max_work_group_size;
-    clGetDeviceInfo(device, 
-                CL_DEVICE_MAX_WORK_GROUP_SIZE,
-                sizeof(max_work_group_size),
-                &max_work_group_size,
-                NULL);
-    printf("Max work-group size: %zu\n", max_work_group_size);
-     // количество потоков которые могут быть кратными 
-     // этому числу для максимальной эффективности
-    size_t prefered_work_group_size;
-    clGetDeviceInfo(device, 
-                CL_DEVICE_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
-                sizeof(prefered_work_group_size),
-                &prefered_work_group_size,
-                NULL);
-    printf("Preffered work-group size: %zu\n", prefered_work_group_size);
-    
-    //
-    size_t max_dims[3];
-    clGetDeviceInfo(device, 
-                CL_DEVICE_MAX_WORK_ITEM_SIZES,
-                sizeof(max_dims),
-                &max_dims,
-                NULL);
-    printf("Max work-group dims: [%zu, %zu, %zu]\n", 
-       max_dims[0], max_dims[1], max_dims[2]);
     
 
     // 10. Запускаем ядро
@@ -156,9 +131,9 @@ int main(){
     // 11. Читаем результат
     clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, size1 * sizeof(float), c, 0, NULL, NULL);
     
-    // 12. Выводим результат
+   //12. Выводим результат
     std::cout << "Результат сложения:\n";
-    for (int i = 0; i < size1; i++) {
+    for (int i = 0; i < 10000; i++) {
         std::cout << a[i]  << " = " << c[i] << std::endl;
     }
     
@@ -322,3 +297,32 @@ int main() {
     return foundAnyDevice ? 0 : 1;
 }
 */
+
+
+/*    // количество потоков в группе
+    size_t max_work_group_size;
+    clGetDeviceInfo(device, 
+                CL_DEVICE_MAX_WORK_GROUP_SIZE,
+                sizeof(max_work_group_size),
+                &max_work_group_size,
+                NULL);
+    printf("Max work-group size: %zu\n", max_work_group_size);
+     // количество потоков которые могут быть кратными 
+     // этому числу для максимальной эффективности
+    size_t prefered_work_group_size;
+    clGetDeviceInfo(device, 
+                CL_DEVICE_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+                sizeof(prefered_work_group_size),
+                &prefered_work_group_size,
+                NULL);
+    printf("Preffered work-group size: %zu\n", prefered_work_group_size);
+    
+    //
+    size_t max_dims[3];
+    clGetDeviceInfo(device, 
+                CL_DEVICE_MAX_WORK_ITEM_SIZES,
+                sizeof(max_dims),
+                &max_dims,
+                NULL);
+    printf("Max work-group dims: [%zu, %zu, %zu]\n", 
+       max_dims[0], max_dims[1], max_dims[2]);*/

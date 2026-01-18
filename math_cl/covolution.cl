@@ -1,6 +1,6 @@
 __kernel void convolution_1d(
 __global const float* input,   // Входной массив
-__global const float* kernel,  // Массив ядра свертки
+__global const float* kernel_f,  // Массив ядра свертки
 __global float* output,        // Выходной массив
 const int input_size,          // Размер входного массива
 const int kernel_size,         // Размер ядра свертки
@@ -22,7 +22,7 @@ const int output_size          // Размер выходного массива
         
         // Проверяем границы входного массива
         if (input_index >= 0 && input_index < input_size) {
-            sum += input[input_index] * kernel[k];
+            sum += input[input_index] * kernel_f[k];
         }
     }
     // Записываем результат
