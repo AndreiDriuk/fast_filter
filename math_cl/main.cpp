@@ -1,60 +1,64 @@
 #include "fastFilter_cl.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <CL/cl.h>
 #include <vector>
 #define SIZE 5
 
+cl_program CreateProgram(cl_context context, cl_device_id device, const char* fileName)
+{
+    cl_int errNum;
+    cl_program program;
 
-const char* kernel_source = 
-    "__kernel void add(__global float* a, __global float* b, __global float* c) {\n"
-    "    int i = get_global_id(0);\n"
-    "    c[i] = a[i] + b[i];\n"
-    "}\n";
+    std::ifstream kernelFile(fileName, std::ios::in);
+    if (!kernelFile.is_open())
+    {
+        std::cerr << "Failed to open file for reading: " << fileName << std::endl;
+        return NULL;
+    }
 
-const char* kernel_source1 = 
-    "__kernel void convolution_1d(\n"
-    "__global const float* input,   // Входной массив\n"
-    "__global const float* kernel,  // Массив ядра свертки\n"
-    "__global float* output,        // Выходной массив\n"
-    "const int input_size,          // Размер входного массива\n"
-    "const int kernel_size,         // Размер ядра свертки\n"
-    "const int output_size          // Размер выходного массива\n"
-") {\n"
-"    // Получаем глобальный индекс потока\n"
-"    int gid = get_global_id(0);\n"
-    
-    // Проверяем границы массива\n"
-"    if (gid >= output_size) {\n"
-"        return;\n"
-"    }\n"
-    
-"    float sum = 0.0f;\n"
-    
-"    // Вычисляем свертку\n"
-"    for (int k = 0; k < kernel_size; k++) {\n"
-"        int input_index = gid + k;\n"
-        
-"        // Проверяем границы входного массива\n"
-"        if (input_index >= 0 && input_index < input_size) {\n"
-"            sum += input[input_index] * kernel[k];\n"
-"        }\n"
-"        // Для режима 'same' или 'valid' может потребоваться другая обработка границ\n"
-"    }\n"
-"    // Записываем результат\n"
-"    output[gid] = sum;\n"
-"}\n";
+    std::ostringstream oss;
+    oss << kernelFile.rdbuf();
 
+    std::string srcStdStr = oss.str();
+    const char *srcStr = srcStdStr.c_str();
+    program = clCreateProgramWithSource(context, 1,
+                                        (const char**)&srcStr,
+                                        NULL, NULL);
+    if (program == NULL)
+    {
+        std::cerr << "Failed to create CL program from source." << std::endl;
+        return NULL;
+    }
+
+    errNum = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
+    if (errNum != CL_SUCCESS)
+    {
+        // Determine the reason for the error
+        char buildLog[16384];
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG,
+                              sizeof(buildLog), buildLog, NULL);
+
+        std::cerr << "Error in kernel: " << std::endl;
+        std::cerr << buildLog;
+        clReleaseProgram(program);
+        return NULL;
+    }
+
+    return program;
+}
 
 
 int main(){
 
     int size1 = 100000;
-    int size2 = 100;
+    int size2 = 100000;
     float *a =  new float[size1];
     float *b  = new float[size2];
     float *c = new float[size1+size2];
 
-    for(int i = 0; i<size1; ++i){
+5    for(int i = 0; i<size1; ++i){
         a[i] = 1;
     }
 
@@ -69,13 +73,9 @@ int main(){
     err = clGetPlatformIDs(1, &platform, &num_platforms);
     //cl_int err = 0;
     
-    // 2. Получаем устройство (GPU или CPU)
+    // 2. Получаем устройство (GPU)
     cl_device_id device;
-    //if(num_platforms!=0)
-        err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-    // else {
-    //     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
-    // }
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
     
     // 3. Создаем контекст
     cl_context context = clCreateContext(NULL, 1, &device, NULL, NULL, NULL);
@@ -92,10 +92,11 @@ int main(){
                                     size1 * sizeof(float), NULL, NULL);
     
     // 6. Создаем программу
-    cl_program program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, NULL);
+    //cl_program program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, NULL);
+    cl_program program =  CreateProgram(context, device, "add.cl");
     
     // 7. Компилируем программу
-    clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+    //clBuildProgram(program, 1, &device, NULL, NULL, NULL);
     
     // 8. Создаем ядро
     cl_kernel kernel = clCreateKernel(program, "add", NULL);
@@ -104,9 +105,9 @@ int main(){
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferA);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &bufferB);
     clSetKernelArg(kernel, 2, sizeof(cl_mem), &bufferC);
-    clSetKernelArg(kernel, 3, sizeof(cl_int), &bufferA);
-    clSetKernelArg(kernel, 4, sizeof(cl_int), &bufferB);
-    clSetKernelArg(kernel, 5, sizeof(cl_int), &bufferC);
+    // clSetKernelArg(kernel, 3, sizeof(cl_int), &bufferA);s
+    // clSetKernelArg(kernel, 4, sizeof(cl_int), &bufferB);
+    // clSetKernelArg(kernel, 5, sizeof(cl_int), &bufferC);
 
 
     // количество потоков в группе

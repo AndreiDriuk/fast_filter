@@ -46,3 +46,6 @@ if(APPLE)
         target_link_libraries(ffilter_cl PRIVATE ${OPENCL_LIB})
     endif()
 endif()
+
+configure_file(covolution.cl ${CMAKE_CURRENT_BINARY_DIR}/covolution.cl COPYONLY)
+configure_file(add.cl ${CMAKE_CURRENT_BINARY_DIR}/add.cl COPYONLY)
