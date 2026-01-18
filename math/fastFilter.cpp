@@ -73,7 +73,6 @@ uint32_t decimate(float* complex_data, uint32_t N1, float *complexFilter, uint32
     return (N1-((N1-N2)/q)*q);// отстаток фильтра; 
 }
 
-
 void decimate(float* complex_data, uint32_t N1, float *complexFilter, uint32_t N2, float * dataOut, uint32_t q){
     int k = 0;
     float data[4];

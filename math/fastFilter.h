@@ -1,3 +1,4 @@
+#pragma once
 #include <cstdint>
 #include <immintrin.h>
 // Function for fast Filtering using intinsics
