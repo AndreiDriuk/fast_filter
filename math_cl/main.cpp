@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <CL/cl.h>
+#include <CL/opencl.hpp>
 #include <vector>
 #define SIZE 5
 

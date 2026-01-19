@@ -47,6 +47,7 @@ if(APPLE)
     endif()
 endif()
 
+configure_file(complex_convolution.cl ${CMAKE_CURRENT_BINARY_DIR}/complex_convolution.cl COPYONLY)
 configure_file(covolution.cl ${CMAKE_CURRENT_BINARY_DIR}/covolution.cl COPYONLY)
 configure_file(add.cl ${CMAKE_CURRENT_BINARY_DIR}/add.cl COPYONLY)
 
