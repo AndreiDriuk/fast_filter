@@ -54,26 +54,19 @@ int main(){
 
 
     size_t kDecim = 7;
-    std::ifstream file1("sinus.bin", std::ios::binary | std::ios::ate);
-    size_t size1 = file1.tellg()/4;
-    file1.seekg(0, std::ios::beg);
-
+    uint32_t size1 =  1000;
     float *data1 = new float[size1];
-    file1.read((char*)data1, size1*4);
-    file1.close();
-    
-    std::ifstream file2("filter.bin", std::ios::binary | std::ios::ate);
-    size_t size2 = file2.tellg();
-    file2.seekg(0, std::ios::beg);
+    float *data2 = new float[size1];
+    float *data3 = new float[size1];
 
-    float *data2 = new float[size2];
-    file2.read((char*)data2, size2*4);
-    file2.close();
-
-    int size3 = size1+size2;
-    float *a =  new float[size1];
-    float *b  = new float[size2];
-    float *c = new float[size1+size2];
+    for(int i = 0; i<size1/2; ++i){
+        data1[2*i] = i;
+        data1[2*i+1] = i;
+        data2[2*i] = i;
+        data2[2*i+1] = -i;
+        data3[2*i] = -1000;
+        data3[2*i+1] = -1000;
+    }
     
     // 1. Получаем платформу
     cl_platform_id platform;
@@ -102,57 +95,30 @@ int main(){
     
     // 6. Создаем программу
     //cl_program program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, NULL);
-    cl_program program =  CreateProgram(context, device, "covolution.cl");
-    
-    // 7. Компилируем программу
-    //clBuildProgram(program, 1, &device, NULL, NULL, NULL);
+    cl_program program =  CreateProgram(context, device, "complex_add.cl");
     
     // 8. Создаем ядро
-    cl_kernel kernel = clCreateKernel(program, "convolution_1d", NULL);
+    cl_kernel kernel = clCreateKernel(program, "complex_add", NULL);
     
     // 9. Устанавливаем аргументы ядра
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferA);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &bufferB);
     clSetKernelArg(kernel, 2, sizeof(cl_mem), &bufferC);
     clSetKernelArg(kernel, 3, sizeof(int),    &size1);
-    clSetKernelArg(kernel, 4, sizeof(int),    &size2);
-    clSetKernelArg(kernel, 5, sizeof(cl_mem), &size3);
-    // clSetKernelArg(kernel, 3, sizeof(cl_int), &bufferA);s
-    // clSetKernelArg(kernel, 4, sizeof(cl_int), &bufferB);
-    // clSetKernelArg(kernel, 5, sizeof(cl_int), &bufferC);
     
-
-    // 10. Запускаем ядро
-    /*clEnqueueNDRangeKernel(cl_command_queue command_queue,
-                       cl_kernel        kernel,
-                       cl_uint          work_dim,
-                       const size_t *   global_work_offset,
-                       const size_t *   global_work_size,
-                       const size_t *   local_work_size,
-                       cl_uint          num_events_in_wait_list,
-                       const cl_event * event_wait_list,
-                       cl_event *       event) CL_API_SUFFIX__VERSION_1_0;*/
     size_t global_size = size1;
     //
     clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
     
     // 11. Читаем результат
-    clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, size1 * sizeof(float), c, 0, NULL, NULL);
+    clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, size1 * sizeof(float), data3, 0, NULL, NULL);
     
    //12. Выводим результат
-    // std::cout << "Результат сложения:\n";
-    // for (int i = 0; i < 10000; i++) {
-    //     std::cout << a[i]  << " = " << c[i] << std::endl;
-    // }
-    std::ofstream fileout("Result.txt", std::ios::trunc);// trunc - перезапишет файл
-
-    if(fileout.is_open()){
-        for(int i = 0; i<(size1/4-size2/4); i+=2){
-            fileout<<i/2<<": "<<c[i]<<" + "<<c[i+1]<<" i"<<"\n";
-        }
-        fileout.close();
+    std::cout << "Результат сложения:\n";
+    for (int i = 0; i < size1; i+=2) {
+        std::cout <<i/2<<": "<<data3[i]<<" + "<<data3[i+1]<<" i"<<"\n";
     }
-    
+
     // 13. Освобождаем ресурсы
     clReleaseKernel(kernel);
     clReleaseProgram(program);
