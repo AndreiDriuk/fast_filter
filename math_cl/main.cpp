@@ -4,6 +4,7 @@
 #include <sstream>
 #include <CL/opencl.hpp>
 #include <vector>
+using namespace std;
 #define SIZE 5
 
 cl_program CreateProgram(cl_context context, cl_device_id device, const char* fileName)
@@ -49,24 +50,28 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
     return program;
 }
 
-
 int main(){
 
-
     size_t kDecim = 7;
-    uint32_t size1 =  1000;
-    float *data1 = new float[size1];
-    float *data2 = new float[size1];
-    float *data3 = new float[size1];
 
-    for(int i = 0; i<size1/2; ++i){
-        data1[2*i] = i;
-        data1[2*i+1] = i;
-        data2[2*i] = i;
-        data2[2*i+1] = -i;
-        data3[2*i] = -1000;
-        data3[2*i+1] = -1000;
-    }
+    ifstream file1("sinus.bin", ios::binary | ios::ate);
+    size_t size1 = file1.tellg();
+    file1.seekg(0, ios::beg);
+
+    float *data1 = new float[size1/4];
+    file1.read((char*)data1, size1);
+    file1.close();
+    
+    ifstream file2("filter.bin", ios::binary | ios::ate);
+    size_t size2 = file2.tellg();
+    file2.seekg(0, ios::beg);
+
+    float *data2 = new float[size2/4];
+    file2.read((char*)data2, size2);
+    file2.close();
+
+    float *data3 = new float[size1-size2/2];
+
     
     // 1. Получаем платформу
     cl_platform_id platform;
@@ -92,31 +97,37 @@ int main(){
                                     size1 * sizeof(float), data2, NULL);
     cl_mem bufferC = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
                                     size1 * sizeof(float), NULL, NULL);
+                                    
     
     // 6. Создаем программу
     //cl_program program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, NULL);
-    cl_program program =  CreateProgram(context, device, "complex_add.cl");
+    //cl_program program =  CreateProgram(context, device, "complex_add.cl");
+    //cl_program program =  CreateProgram(context, device, "complex_mult.cl");
+    cl_program program =  CreateProgram(context, device, "complex_conv.cl");
     
     // 8. Создаем ядро
-    cl_kernel kernel = clCreateKernel(program, "complex_add", NULL);
+    //cl_kernel kernel = clCreateKernel(program, "complex_add", NULL);
+    //cl_kernel kernel = clCreateKernel(program, "complex_mult", NULL);
+    cl_kernel kernel = clCreateKernel(program, "complex_conv", NULL);
     
     // 9. Устанавливаем аргументы ядра
     clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferA);
     clSetKernelArg(kernel, 1, sizeof(cl_mem), &bufferB);
     clSetKernelArg(kernel, 2, sizeof(cl_mem), &bufferC);
     clSetKernelArg(kernel, 3, sizeof(int),    &size1);
+    clSetKernelArg(kernel, 4, sizeof(int),    &size2);
     
-    size_t global_size = size1;
+    size_t global_size = size1/2;
     //
     clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, NULL, 0, NULL, NULL);
     
     // 11. Читаем результат
-    clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0, size1 * sizeof(float), data3, 0, NULL, NULL);
+    clEnqueueReadBuffer(queue, bufferC, CL_TRUE, 0,(size1-size2) * sizeof(float), data3, 0, NULL, NULL);
     
    //12. Выводим результат
     std::cout << "Результат сложения:\n";
-    for (int i = 0; i < size1; i+=2) {
-        std::cout <<i/2<<": "<<data3[i]<<" + "<<data3[i+1]<<" i"<<"\n";
+    for (int i = 0; i < (size1-size2)/2; i+=2) {
+        std::cout <<data3[i]<<" + "<<data3[i+1]<<"i"<<"\n";
     }
 
     // 13. Освобождаем ресурсы
